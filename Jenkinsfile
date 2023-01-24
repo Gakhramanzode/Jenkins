@@ -1,22 +1,28 @@
-pipeline {
-    agent any
-    stages {
-        stage ("build") {
-            steps {
-                echo "Jenkins делает сборку"
-            }
-        }
+properties([parameters([string(defaultValue: 'Hello', description: 'How should I greet the world?', name: 'Greeting')])])
 
-        stage ("test") {
-            steps {
-                echo "Jenkins делает тесты"
-            }
-        }
+node {
+    checkout scm
 
-        stage ("deploy") {
-            steps {
-                echo "Jenkins делает загрузку"
-            }
+    echo "${params.Greeting} World!"
+
+    stage('Build') {
+        sh 'make' 
+        archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true 
+    }
+    stage('Test') {
+        /* `make check` returns non-zero on test failures,
+         * using `true` to allow the Pipeline to continue nonetheless
+         */
+        try {
+            sh 'make check'
+        }
+        finally {
+            junit '**/target/*.xml'
+        }
+    }
+    stage('Deploy') {
+        if (currentBuild.result == null || currentBuild.result == 'SUCCESS') { 
+            sh 'make publish'
         }
     }
 }
