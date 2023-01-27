@@ -1,7 +1,8 @@
 node {
-    docker.image('node:16.13.1-alpine').inside {
-        stage('Test') {
-            sh 'node --version'
+    /* Requires the Docker Pipeline plugin to be installed */
+    docker.image('maven:3.8.7-eclipse-temurin-11').inside('-v $HOME/.m2:/root/.m2') {
+        stage('Build') {
+            sh 'mvn -B'
         }
     }
 }
